@@ -335,6 +335,243 @@ docker run --rm -i --env-file .env \
   ghcr.io/sooperset/mcp-atlassian:latest
 ```
 
+## Building and Deploying from a Specific Branch
+
+If you want to deploy a specific branch (e.g., a feature branch or development version) instead of the pre-built latest release, follow these steps:
+
+### Prerequisites
+
+- ✅ **Git installed** ([Install Git](https://git-scm.com/downloads))
+- ✅ **Docker installed** ([Install Docker](https://docs.docker.com/get-docker/))
+- ✅ **Atlassian credentials** (for testing your deployment)
+
+### Step 1: Clone the Repository and Checkout the Branch
+
+Clone the repository and switch to your desired branch:
+
+```bash
+# Clone the repository
+git clone https://github.com/wildwildleha/mcp-atlassian.git
+cd mcp-atlassian
+
+# List available branches
+git branch -a
+
+# Checkout the specific branch you want to deploy
+git checkout branch-name
+
+# Or checkout a remote branch
+git checkout -b local-branch-name origin/remote-branch-name
+```
+
+**Common branch examples:**
+- `main` - Stable main branch
+- `develop` or `dev` - Development branch
+- `feature/new-feature` - Feature branch
+- `fix/bug-description` - Bug fix branch
+
+### Step 2: Build the Docker Image from Source
+
+Build a Docker image from the branch you checked out:
+
+```bash
+# Build with a descriptive tag
+docker build -t mcp-atlassian:branch-name .
+
+# Or build with a version tag
+docker build -t mcp-atlassian:feature-xyz .
+
+# View your built images
+docker images mcp-atlassian
+```
+
+**Build options:**
+```bash
+# Build with no cache (clean build)
+docker build --no-cache -t mcp-atlassian:branch-name .
+
+# Build with build arguments
+docker build --build-arg PYTHON_VERSION=3.10 -t mcp-atlassian:branch-name .
+
+# Build and view output
+docker build -t mcp-atlassian:branch-name . --progress=plain
+```
+
+### Step 3: Test the Built Image
+
+Test your newly built image with your configuration:
+
+```bash
+# Test with environment file
+docker run --rm -i --env-file .env mcp-atlassian:branch-name
+
+# Test with inline environment variables
+docker run --rm -i \
+  -e CONFLUENCE_URL=https://confluence.example.com \
+  -e CONFLUENCE_USERNAME=user \
+  -e CONFLUENCE_API_TOKEN=token \
+  mcp-atlassian:branch-name
+
+# Test with verbose logging
+docker run --rm -i --env-file .env \
+  -e MCP_VERBOSE=true \
+  mcp-atlassian:branch-name
+```
+
+### Step 4: Use the Custom Image in Your MCP Configuration
+
+Update your MCP toolkit configuration to use your custom-built image:
+
+**Claude Desktop / Cursor Configuration:**
+
+```json
+{
+  "mcpServers": {
+    "mcp-atlassian": {
+      "command": "docker",
+      "args": [
+        "run", "-i", "--rm",
+        "-e", "JIRA_URL",
+        "-e", "JIRA_USERNAME",
+        "-e", "JIRA_API_TOKEN",
+        "-e", "CONFLUENCE_URL",
+        "-e", "CONFLUENCE_USERNAME",
+        "-e", "CONFLUENCE_API_TOKEN",
+        "mcp-atlassian:branch-name"
+      ],
+      "env": {
+        "JIRA_URL": "https://your-company.atlassian.net",
+        "JIRA_USERNAME": "your.email@company.com",
+        "JIRA_API_TOKEN": "your_jira_api_token",
+        "CONFLUENCE_URL": "https://your-company.atlassian.net/wiki",
+        "CONFLUENCE_USERNAME": "your.email@company.com",
+        "CONFLUENCE_API_TOKEN": "your_confluence_api_token"
+      }
+    }
+  }
+}
+```
+
+> **Note**: Replace `mcp-atlassian:branch-name` with the tag you used when building the image.
+
+### Step 5: Using Docker Compose with Custom Build
+
+You can also use Docker Compose to build from source. Create or modify `docker-compose.yml`:
+
+```yaml
+version: '3.8'
+
+services:
+  mcp-atlassian-branch:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mcp-atlassian-branch
+    stdin_open: true
+    tty: false
+    env_file:
+      - .env
+```
+
+**Docker Compose commands:**
+
+```bash
+# Build the image
+docker compose build
+
+# Build without cache
+docker compose build --no-cache
+
+# Run the service
+docker compose run --rm mcp-atlassian-branch
+
+# Start as a background service (for HTTP transport)
+docker compose up -d mcp-atlassian-branch
+
+# View logs
+docker compose logs -f mcp-atlassian-branch
+
+# Stop the service
+docker compose down
+```
+
+### Step 6: Managing Multiple Branch Images
+
+Keep track of different branch builds:
+
+```bash
+# Tag images with descriptive names
+docker build -t mcp-atlassian:main .
+docker build -t mcp-atlassian:feature-xyz .
+docker build -t mcp-atlassian:dev .
+
+# List all your mcp-atlassian images
+docker images mcp-atlassian
+
+# Remove old/unused images
+docker rmi mcp-atlassian:old-branch
+
+# Clean up unused images
+docker image prune
+```
+
+### Updating to a Newer Version of the Branch
+
+When the branch is updated on GitHub:
+
+```bash
+# Pull latest changes
+git pull origin branch-name
+
+# Rebuild the image
+docker build -t mcp-atlassian:branch-name .
+
+# Restart your MCP toolkit to use the updated image
+```
+
+### Troubleshooting Branch Deployments
+
+**Problem: Build fails with "uv lock" errors**
+- **Cause**: Network issues or dependency conflicts
+- **Fix**: Ensure you have internet connectivity and try `docker build --no-cache`
+
+**Problem: Image builds but doesn't work**
+- **Cause**: The branch may have breaking changes or missing dependencies
+- **Fix**: Check the branch's README or recent commits for setup requirements
+
+**Problem: Can't find branch**
+- **Cause**: Branch doesn't exist locally or remotely
+- **Fix**: Run `git fetch --all` to update remote branches, then `git branch -a` to list all
+
+**Problem: Docker build is slow**
+- **Cause**: Docker is downloading dependencies
+- **Fix**: This is normal for first build; subsequent builds use cache
+
+### Best Practices for Branch Deployments
+
+1. **Tag images clearly**: Use descriptive tags like `feature-name` or `dev-yyyy-mm-dd`
+2. **Test before deploying**: Always test the built image before integrating with your MCP toolkit
+3. **Document the branch**: Note which branch/commit you deployed for troubleshooting
+4. **Keep branches updated**: Regularly pull updates if testing an active development branch
+5. **Clean up old images**: Remove unused branch images to save disk space
+
+### Quick Reference for Branch Deployment
+
+```bash
+# Clone and build from a specific branch
+git clone https://github.com/wildwildleha/mcp-atlassian.git
+cd mcp-atlassian
+git checkout branch-name
+docker build -t mcp-atlassian:branch-name .
+
+# Test the image
+docker run --rm -i --env-file .env mcp-atlassian:branch-name
+
+# Use in Docker Compose (add to docker-compose.yml)
+docker compose build
+docker compose run --rm mcp-atlassian-branch
+```
+
 ## Documentation
 
 Full documentation is available at **[personal-1d37018d.mintlify.app](https://personal-1d37018d.mintlify.app)**.
