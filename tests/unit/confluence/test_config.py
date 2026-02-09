@@ -52,7 +52,8 @@ def test_from_env_missing_cloud_auth():
     ):
         with pytest.raises(
             ValueError,
-            match="Cloud authentication requires CONFLUENCE_USERNAME and CONFLUENCE_API_TOKEN",
+            match="Cloud authentication requires CONFLUENCE_USERNAME and "
+            "CONFLUENCE_API_TOKEN",
         ):
             ConfluenceConfig.from_env()
 
@@ -68,7 +69,8 @@ def test_from_env_missing_server_auth():
     ):
         with pytest.raises(
             ValueError,
-            match="Server/Data Center authentication requires CONFLUENCE_PERSONAL_TOKEN",
+            match="Server/Data Center authentication requires "
+            "CONFLUENCE_PERSONAL_TOKEN",
         ):
             ConfluenceConfig.from_env()
 
