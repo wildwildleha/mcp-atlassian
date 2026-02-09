@@ -240,3 +240,38 @@ def test_from_env_without_client_cert():
         assert config.client_cert is None
         assert config.client_key is None
         assert config.client_key_password is None
+
+
+def test_from_env_server_dc_basic_auth():
+    """Test that Server/DC basic authentication works with username and password."""
+    with patch.dict(
+        os.environ,
+        {
+            "CONFLUENCE_URL": "https://confluence.example.com",  # Server/DC URL
+            "CONFLUENCE_USERNAME": "test_user",
+            "CONFLUENCE_API_TOKEN": "test_password",
+        },
+        clear=True,
+    ):
+        config = ConfluenceConfig.from_env()
+
+        assert config.url == "https://confluence.example.com"
+        assert config.auth_type == "basic"
+        assert config.username == "test_user"
+        assert config.api_token == "test_password"
+        assert config.personal_token is None
+        assert config.is_cloud is False
+
+
+def test_is_auth_configured_server_dc_basic():
+    """Test that Server/DC basic auth is recognized as configured."""
+    config = ConfluenceConfig(
+        url="https://confluence.example.com",
+        auth_type="basic",
+        username="test_user",
+        api_token="test_password",
+    )
+
+    assert config.is_auth_configured() is True
+    assert config.is_cloud is False
+    assert config.auth_type == "basic"

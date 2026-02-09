@@ -24,7 +24,7 @@ https://github.com/user-attachments/assets/7fe9c488-ad0c-4876-9b54-120b666bb785
 
 Go to https://id.atlassian.com/manage-profile/security/api-tokens and create a token.
 
-> For Server/Data Center, use a Personal Access Token instead. See [Authentication](https://personal-1d37018d.mintlify.app/docs/authentication).
+> **Server/Data Center users**: Use a Personal Access Token (PAT) if supported by your version. For older versions (e.g., Confluence 7.3.1, Jira < 8.14) that don't support PAT, use basic authentication with username and password. See [Authentication](https://personal-1d37018d.mintlify.app/docs/authentication) for details.
 
 ### 2. Configure Your IDE
 
@@ -51,7 +51,11 @@ Add to your Claude Desktop or Cursor MCP configuration:
 
 > **Python 3.14 not yet supported.** Use `["--python=3.12", "mcp-atlassian"]` as args if needed.
 
-> **Server/Data Center users**: Use `JIRA_PERSONAL_TOKEN` instead of `JIRA_USERNAME` + `JIRA_API_TOKEN`. See [Authentication](https://personal-1d37018d.mintlify.app/docs/authentication) for details.
+> **Server/Data Center users**: 
+> - **PAT (recommended)**: Use `JIRA_PERSONAL_TOKEN` / `CONFLUENCE_PERSONAL_TOKEN` for newer versions
+> - **Basic Auth (legacy)**: Use `USERNAME` + `API_TOKEN` (as password) for older versions that don't support PAT
+> - See [Authentication](https://personal-1d37018d.mintlify.app/docs/authentication) for complete details and examples.
+
 
 ### 3. Start Using
 
