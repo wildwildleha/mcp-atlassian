@@ -15,8 +15,51 @@ description: "Common issues and debugging tips for MCP Atlassian"
   </Accordion>
 
   <Accordion title="Authentication Failures (Server/Data Center)">
+    **For newer versions (Jira 8.14+ / Confluence 7.9+):**
     - Verify your Personal Access Token is valid and not expired
-    - For older Confluence servers, try basic auth with `CONFLUENCE_USERNAME` and `CONFLUENCE_API_TOKEN` (where token is your password)
+    - Ensure token has proper permissions
+    
+    **For older versions (Confluence 7.3.1, Jira < 8.14) without PAT support:**
+    - Use basic authentication with `USERNAME` and `API_TOKEN` (as password)
+    - Example:
+      ```bash
+      CONFLUENCE_URL=https://confluence.yourcompany.com
+      CONFLUENCE_USERNAME=your_username
+      CONFLUENCE_API_TOKEN=your_actual_password
+      ```
+    - **Important**: Both `USERNAME` and `API_TOKEN` must be set
+  </Accordion>
+
+  <Accordion title='"Atlassian require secrets to work" Error'>
+    This error appears when authentication credentials are incomplete.
+    
+    **For Server/DC Basic Authentication:**
+    - **Both** `USERNAME` and `API_TOKEN` must be set
+    - Common mistake: Only setting `API_TOKEN` without `USERNAME`
+    
+    **Solution:**
+    ```bash
+    # Confluence example
+    CONFLUENCE_URL=https://confluence.yourcompany.com
+    CONFLUENCE_USERNAME=your_username        # ← Must be set!
+    CONFLUENCE_API_TOKEN=your_password       # ← Must be set!
+    
+    # Jira example
+    JIRA_URL=https://jira.yourcompany.com
+    JIRA_USERNAME=your_username              # ← Must be set!
+    JIRA_API_TOKEN=your_password             # ← Must be set!
+    ```
+    
+    **For Docker:**
+    ```bash
+    docker run --rm -i \
+      -e CONFLUENCE_URL=https://confluence.yourcompany.com \
+      -e CONFLUENCE_USERNAME=your_username \
+      -e CONFLUENCE_API_TOKEN=your_password \
+      ghcr.io/sooperset/mcp-atlassian:latest
+    ```
+    
+    See [docker-compose.example.yml](https://github.com/sooperset/mcp-atlassian/blob/main/docker-compose.example.yml) for complete examples.
   </Accordion>
 
   <Accordion title="SSL Certificate Issues">

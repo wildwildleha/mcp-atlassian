@@ -1,0 +1,158 @@
+# Docker Compose Example for MCP Atlassian
+# ==========================================
+# 
+# This file provides examples for running MCP Atlassian with Docker.
+# Copy this file to docker-compose.yml and uncomment/modify the example you need.
+#
+# IMPORTANT: Never commit your actual credentials to version control!
+# Use a .env file (see .env.example) for your actual credentials.
+
+version: '3.8'
+
+services:
+  # ============================================================================
+  # EXAMPLE 1: Server/Data Center with Basic Authentication (Username/Password)
+  # ============================================================================
+  # Use this for older Server/DC versions that don't support Personal Access Tokens
+  # Examples: Confluence 7.3.1, Jira versions prior to 8.14
+  
+  mcp-atlassian-basic-auth:
+    image: ghcr.io/sooperset/mcp-atlassian:latest
+    container_name: mcp-atlassian-basic
+    stdin_open: true  # Required for stdio transport
+    tty: false        # Should be false for stdio
+    environment:
+      # Confluence configuration with basic auth
+      CONFLUENCE_URL: https://confluence.yourcompany.com
+      CONFLUENCE_USERNAME: your_username
+      CONFLUENCE_API_TOKEN: your_password  # Use actual password here
+      CONFLUENCE_SSL_VERIFY: "false"  # Set to false for self-signed certificates
+      
+      # Jira configuration with basic auth (optional)
+      JIRA_URL: https://jira.yourcompany.com
+      JIRA_USERNAME: your_username
+      JIRA_API_TOKEN: your_password  # Use actual password here
+      JIRA_SSL_VERIFY: "false"
+      
+      # Optional: Enable verbose logging
+      # MCP_VERBOSE: "true"
+    # Note: For stdio transport, you'll interact via docker run -i
+    # Example: docker run -i --rm --env-file .env ghcr.io/sooperset/mcp-atlassian:latest
+
+  # ============================================================================
+  # EXAMPLE 2: Server/Data Center with Personal Access Token (Recommended)
+  # ============================================================================
+  # Use this for newer Server/DC versions that support PAT
+  # Jira 8.14+ / Confluence 7.9+
+  
+  mcp-atlassian-pat:
+    image: ghcr.io/sooperset/mcp-atlassian:latest
+    container_name: mcp-atlassian-pat
+    stdin_open: true
+    tty: false
+    environment:
+      CONFLUENCE_URL: https://confluence.yourcompany.com
+      CONFLUENCE_PERSONAL_TOKEN: your_confluence_pat_token
+      CONFLUENCE_SSL_VERIFY: "true"
+      
+      JIRA_URL: https://jira.yourcompany.com
+      JIRA_PERSONAL_TOKEN: your_jira_pat_token
+      JIRA_SSL_VERIFY: "true"
+
+  # ============================================================================
+  # EXAMPLE 3: Atlassian Cloud with API Token
+  # ============================================================================
+  
+  mcp-atlassian-cloud:
+    image: ghcr.io/sooperset/mcp-atlassian:latest
+    container_name: mcp-atlassian-cloud
+    stdin_open: true
+    tty: false
+    environment:
+      CONFLUENCE_URL: https://yourcompany.atlassian.net/wiki
+      CONFLUENCE_USERNAME: your.email@company.com
+      CONFLUENCE_API_TOKEN: your_api_token
+      
+      JIRA_URL: https://yourcompany.atlassian.net
+      JIRA_USERNAME: your.email@company.com
+      JIRA_API_TOKEN: your_api_token
+
+  # ============================================================================
+  # EXAMPLE 4: HTTP Transport (SSE) - For multi-user scenarios
+  # ============================================================================
+  
+  mcp-atlassian-http:
+    image: ghcr.io/sooperset/mcp-atlassian:latest
+    container_name: mcp-atlassian-http
+    ports:
+      - "8000:8000"
+    environment:
+      TRANSPORT: sse
+      PORT: "8000"
+      HOST: 0.0.0.0
+      
+      # Configure your authentication method (basic auth example)
+      CONFLUENCE_URL: https://confluence.yourcompany.com
+      CONFLUENCE_USERNAME: your_username
+      CONFLUENCE_API_TOKEN: your_password
+      CONFLUENCE_SSL_VERIFY: "false"
+    command: ["--transport", "sse", "--port", "8000"]
+
+  # ============================================================================
+  # EXAMPLE 5: Using Environment File (Recommended for Production)
+  # ============================================================================
+  
+  mcp-atlassian-envfile:
+    image: ghcr.io/sooperset/mcp-atlassian:latest
+    container_name: mcp-atlassian-envfile
+    stdin_open: true
+    tty: false
+    env_file:
+      - .env  # Copy .env.example to .env and configure your credentials there
+
+# ============================================================================
+# HOW TO USE
+# ============================================================================
+#
+# 1. Copy this file to docker-compose.yml
+# 2. Uncomment ONE of the examples above
+# 3. Update the environment variables with your actual credentials
+# 4. Run with: docker compose up mcp-atlassian-basic-auth
+#    (or whichever service name you uncommented)
+#
+# For stdio transport (Examples 1-3):
+#   docker compose run --rm mcp-atlassian-basic-auth
+#
+# For HTTP/SSE transport (Example 4):
+#   docker compose up mcp-atlassian-http
+#   Then access at http://localhost:8000
+#
+# ============================================================================
+# TROUBLESHOOTING
+# ============================================================================
+#
+# Issue: "Atlassian require secrets to work" error
+# Solution: Make sure you set BOTH username AND api_token (password) for basic auth:
+#   - CONFLUENCE_USERNAME=your_username
+#   - CONFLUENCE_API_TOKEN=your_password  (not optional!)
+#
+# Issue: SSL certificate errors
+# Solution: Set SSL_VERIFY to false for self-signed certificates:
+#   - CONFLUENCE_SSL_VERIFY=false
+#   - JIRA_SSL_VERIFY=false
+#
+# Issue: Connection refused or timeout
+# Solution: 
+#   - Verify the URL is correct and accessible from Docker
+#   - Check if you need to configure HTTP_PROXY or HTTPS_PROXY
+#   - Ensure firewall allows connections from Docker containers
+#
+# Issue: Authentication failures
+# Solution:
+#   - For Server/DC basic auth: Use actual password in API_TOKEN variable
+#   - For PAT: Ensure token has proper permissions and hasn't expired
+#   - Check if username format is correct (some systems use email, others username)
+#
+# Enable verbose logging to debug:
+#   MCP_VERBOSE=true (INFO level)
+#   MCP_VERY_VERBOSE=true (DEBUG level)

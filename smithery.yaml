@@ -4,25 +4,28 @@ startCommand:
   configSchema:
     # JSON Schema defining the configuration options users need to provide
     type: object
-    required:
-      - jiraUrl
-      - confluenceUrl
-      # Add other strictly required credentials based on auth needs
+    # At least one service (Jira or Confluence) must be configured
+    # Authentication requires: username+apiToken OR personalToken OR OAuth
+    anyOf:
+      - required: [jiraUrl, jiraUsername, jiraApiToken]
+      - required: [jiraUrl, jiraPersonalToken]
+      - required: [confluenceUrl, confluenceUsername, confluenceApiToken]
+      - required: [confluenceUrl, confluencePersonalToken]
     properties:
       # Confluence Config
       confluenceUrl:
         type: string
-        description: "Base URL for your Confluence instance (e.g., https://your-domain.atlassian.net/wiki or https://confluence.yourcompany.com)."
+        description: "Base URL for your Confluence instance (e.g., https://your-domain.atlassian.net/wiki or https://confluence.yourcompany.com). Required if using Confluence."
       confluenceUsername:
         type: string
-        description: "(Optional for Cloud Basic Auth) Your Confluence username or email."
+        description: "(For Basic Auth) Your Confluence username or email. Required with confluenceApiToken for basic authentication."
       confluenceApiToken:
         type: string
-        description: "(Optional for Cloud Basic Auth) Your Confluence API token."
+        description: "(For Basic Auth) Your Confluence API token (Cloud) or password (Server/DC). Required with confluenceUsername for basic authentication."
         format: password # Hides the value in UI inputs
       confluencePersonalToken:
         type: string
-        description: "(Optional for Server/DC Token Auth) Your Confluence Personal Access Token."
+        description: "(For PAT Auth) Your Confluence Personal Access Token (Server/DC only, Confluence 7.9+). Alternative to username+apiToken."
         format: password
       confluenceSslVerify:
         type: boolean
@@ -35,17 +38,17 @@ startCommand:
       # Jira Config
       jiraUrl:
         type: string
-        description: "Base URL for your Jira instance (e.g., https://your-domain.atlassian.net or https://jira.yourcompany.com)."
+        description: "Base URL for your Jira instance (e.g., https://your-domain.atlassian.net or https://jira.yourcompany.com). Required if using Jira."
       jiraUsername:
         type: string
-        description: "(Optional for Cloud Basic Auth or Server/DC Basic Auth) Your Jira username or email."
+        description: "(For Basic Auth) Your Jira username or email. Required with jiraApiToken for basic authentication."
       jiraApiToken:
         type: string
-        description: "(Optional for Cloud Basic Auth or Server/DC Basic Auth) Your Jira API token."
+        description: "(For Basic Auth) Your Jira API token (Cloud) or password (Server/DC). Required with jiraUsername for basic authentication."
         format: password
       jiraPersonalToken:
         type: string
-        description: "(Optional for Server/DC Token Auth) Your Jira Personal Access Token."
+        description: "(For PAT Auth) Your Jira Personal Access Token (Server/DC only, Jira 8.14+). Alternative to username+apiToken."
         format: password
       jiraSslVerify:
         type: boolean
